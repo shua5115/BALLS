@@ -7,7 +7,7 @@ A flexible controls library for love
 # Features
 - Supports keyboard, mouse, gamepad, and joystick
 - Ability to listen for inputs for remappable controls
-- Control preprocessing (deadzones, scaling)
+- Helper functions for deadzones and converting input types
 
 # Limitations
 - No gesture support
