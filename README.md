@@ -59,10 +59,9 @@ mapping = {
 	}
 }
 ```
-- Joystick (optional): a joystick to associate with this control table.
-	Only this joystick will be used to update the actions.
-	If no joystick is provided when a control is created, its gamepad or joystick mappings
-	will be inactive until a Joystick is bound after the fact
+- Joystick (optional): a joystick or joystick number to associate with this control table
+	- Only this joystick will be used to update the actions
+	- If no joystick is provided when a control is created, its gamepad or joystick mappings will be inactive
 
 action: a table that is automatically created for every action key in ctrl.actions
 - an action typically contains this information (default value):
