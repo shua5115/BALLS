@@ -22,7 +22,7 @@ A flexible controls library for love
 
 ```
 local controls = require "controlactions"
-love.run = controls.defaultrun  -- modified version of love's default run function
+love.run = love.listeners.run  -- modified version of love's default run function to allow libraries to run code with callbacks
 ```
 
 ## Library Functions
