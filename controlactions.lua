@@ -309,8 +309,15 @@ local function resetaction(action)
 	return action
 end
 
-local function newaction()
-	return resetaction({})
+local function newaction(src)
+	local action = {}
+	resetaction(action)
+	if type(src) == "table" then
+		for k, v in pairs(src) do
+			action[k] = v
+		end
+	end
+	return action
 end
 
 function controls.deadzone(action, deadmin, deadmax)
@@ -326,7 +333,7 @@ function controls.deadzone(action, deadmin, deadmax)
 		if newmag > 1 then newmag = 1 end
 		x, y = x*newmag, y*newmag -- remap
 	end
-	local ret = newaction()
+	local ret = newaction(action)
 	ret.x, ret.y = x, y
 	return ret
 end
