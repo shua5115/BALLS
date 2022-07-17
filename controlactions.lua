@@ -15,6 +15,18 @@ local function safeget(t, ...)
 	return nil
 end
 
+local function lerp(x, y, t)
+	return x + t*(y - x)
+end
+
+local function ilerp(x, y, v)
+	return (v - x)/(y - x)
+end
+
+local function map(v, x, y, z, w)
+	return lerp(z, w, ilerp(x, y, v))
+end
+
 local buttonjustpressed = {}
 local buttonjustreleased = {}
 
@@ -85,8 +97,16 @@ local function handleaxis2d(x, y, ctrl, ...)
 	end
 end
 
+local wasleftxchanged = false
+local wasleftychanged = false
+local wasrightxchanged = false
+local wasrightychanged = false
+
 local function handlejoystickaxis(joystick, value, ctrl, device, key, ...)
-	if ctrl.joystick ~= joystick then return end
+	if type(ctrl.joystick) == "number" then
+		if love.joystick.getJoysticks()[ctrl.joystick] ~= joystick then return end
+	elseif ctrl.joystick ~= joystick then return end
+	
 	local function process(actionname)
 		local action = safeget(ctrl.actions, actionname)
 		if action then
@@ -96,16 +116,20 @@ local function handlejoystickaxis(joystick, value, ctrl, device, key, ...)
 			pcall(love.event.push, "actionaxis", ctrl, actionname, action)
 		end
 		if key == "leftx" then
-			handleaxis2d(value, nil, ctrl, device, "leftstick")
+			wasleftxchanged = true
+			handleaxis2d(value, nil, ctrl, device, "leftxy")
 		end
 		if key == "lefty" then
-			handleaxis2d(nil, value, ctrl, device, "leftstick")
+			wasleftychanged = true
+			handleaxis2d(nil, value, ctrl, device, "leftxy")
 		end
 		if key == "rightx" then
-			handleaxis2d(value, nil, ctrl, device, "rightstick")
+			wasrightxchanged = true
+			handleaxis2d(value, nil, ctrl, device, "rightxy")
 		end
 		if key == "righty" then
-			handleaxis2d(nil, value, ctrl, device, "rightstick")
+			wasrightychanged = true
+			handleaxis2d(nil, value, ctrl, device, "rightxy")
 		end
 	end
 	local actions = safeget(ctrl.mapping, device, key, ...)
@@ -197,10 +221,10 @@ function callbacks.gamepadaxis(j, a, v)
 	if v > 0.5 or v < -0.5 then
 		setlastinput("axis", "gamepad", a)
 		if a == "leftx" or a == "lefty" then
-			setlastinput("axis2d", "gamepad", "leftstick")
+			setlastinput("axis2d", "gamepad", "leftxy")
 		end
 		if a == "rightx" or a == "righty" then
-			setlastinput("axis2d", "gamepad", "rightstick")
+			setlastinput("axis2d", "gamepad", "rightxy")
 		end
 	end
 	for ctrl in pairs(active) do
@@ -231,14 +255,12 @@ function callbacks.joystickaxis(j, a, v)
 end
 
 function callbacks.update(dt)
-	if not (wasmousemoved and waswheelmoved) then
-		for ctrl in pairs(active) do
-			if not wasmousemoved then
-				handleaxis2d(0, 0, ctrl, "mouse", "delta")
-			end
-			if not waswheelmoved then
-				handleaxis2d(0, 0, ctrl, "mouse", "wheel")
-			end
+	for ctrl in pairs(active) do
+		if not wasmousemoved then
+			handleaxis2d(0, 0, ctrl, "mouse", "delta")
+		end
+		if not waswheelmoved then
+			handleaxis2d(0, 0, ctrl, "mouse", "wheel")
 		end
 	end
 	wasmousemoved = false
@@ -291,6 +313,24 @@ local function newaction()
 	return resetaction({})
 end
 
+function controls.deadzone(action, deadmin, deadmax)
+	assert(deadmin < deadmax, "deadzone min must be less than deadzone max")
+	local x, y = action.x or 0, action.y or 0
+	local mag = (x*x + y*y)^0.5
+	if mag < deadmin then
+		x, y = 0, 0
+	else
+		x, y = x/mag, y/mag	-- normalize
+		local newmag = map(mag, deadmin, deadmax, 0, 1)
+		if newmag < 0 then newmag = 0 end
+		if newmag > 1 then newmag = 1 end
+		x, y = x*newmag, y*newmag -- remap
+	end
+	local ret = newaction()
+	ret.x, ret.y = x, y
+	return ret
+end
+
 local ctrlhelper = {}
 
 function ctrlhelper.setactive(ctrl, isactive)
@@ -312,6 +352,10 @@ end
 
 function ctrlhelper.getaction(ctrl, actionname)
 	return safeget(ctrl.actions, actionname) or newaction()
+end
+
+function ctrlhelper.deadzone(ctrl, actionname, deadmin, deadmax)
+	return controls.deadzone(ctrlhelper.getaction(ctrl, actionname), deadmin, deadmax)
 end
 
 function ctrlhelper.getinputs(ctrl, actionname)
@@ -363,6 +407,7 @@ function ctrlhelper.newaction(ctrl, actionname)
 end
 
 function ctrlhelper.addmapping(ctrl, actionname, ...)
+	if actionname == nil then return end
 	local arg = {...}
 	local argc = #arg
 	if argc == 0 then return end
@@ -395,6 +440,7 @@ function ctrlhelper.addmapping(ctrl, actionname, ...)
 	end
 end
 
+-- code copied from https://stackoverflow.com/a/53038524, thank you, very cool
 local function arrayremove(t, fnKeep)
     local j, n = 1, #t;
 
@@ -415,6 +461,7 @@ local function arrayremove(t, fnKeep)
 end
 
 function ctrlhelper.setuniquemapping(ctrl, actionname, ...)
+	if actionname == nil then return end
 	local inputs = ctrlhelper.getinputs(ctrl, actionname)
 	-- first, remove all references to this actionname from the mapping
 	for i, path in ipairs(inputs) do
@@ -448,14 +495,14 @@ function ctrlhelper.buttonsToAxis(ctrl, actionname, bt1, bt2, bt3, bt4, normaliz
 		if normalize and action.x ~= 0 and action.y ~= 0 then
 			action.x, action.y = action.x * isqrt2, action.y * isqrt2
 		end
-		--if exists then
-		--	pcall(love.event.push, "actionaxis2d", ctrl, actionname, action)
-		--end
+		if exists then
+			pcall(love.event.push, "actionaxis2d", ctrl, actionname, action)
+		end
 	elseif bt1 and bt2 then	-- 1d axis
 		action.value = 0 + (bt1a.button and -1 or 0) + (bt2a.button and 1 or 0)
-		--if exists then
-		--	pcall(love.event.push, "actionaxis", ctrl, actionname, action)
-		--end
+		if exists then
+			pcall(love.event.push, "actionaxis", ctrl, actionname, action)
+		end
 	end
 	return action
 end
@@ -471,9 +518,9 @@ function ctrlhelper.toAxis2d(ctrl, actionname, ax1, ax2, normalize)
 		local mag = (action.x*action.x + action.y*action.y)^0.5	-- does fast inverse square root exist in love?
 		action.x, action.y = action.x / mag, action.y / mag
 	end
-	--if exists then
-	--	pcall(love.event.push, "actionaxis2d", ctrl, actionname, action)
-	--end
+	if exists then
+		pcall(love.event.push, "actionaxis2d", ctrl, actionname, action)
+	end
 end
 
 function ctrlhelper.type(ctrl)
@@ -506,7 +553,7 @@ function controls.new(t, actions, mapping, joystick)
 	}
 	-- only allow actual joystick objects (this is the best type check I can do for now)
 	local joymt = getmetatable(joystick)
-	if joymt and joymt.typeOf == "function" and joymt.typeOf("Joystick") then
+	if type(joystick) == "number" or (joymt and joymt.typeOf == "function" and joymt.typeOf("Joystick")) then
 		ctrl.joystick = joystick
 	end
 	-- for some strange reason, the metatable member __index of the ctrl must be set for it to be an argument in a love event
