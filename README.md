@@ -102,6 +102,7 @@ action: a table that is automatically created for every action key in ctrl.actio
 
 `controls.deadzone(action, min, max)`
 - applies a smooth deadzone on the action and returns a new action with the deadzone applied
+	- the new action retains all other values from the old action, such as buttonpressed
 - min must be less than max
 - "smooth deadzone" is applied with the following pseudocode: `if mag < min then mag = 0 else (remap mag from range [min, max] to range [0, 1]) end`
 
