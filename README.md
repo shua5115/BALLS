@@ -2,16 +2,12 @@
 A flexible controls library for love
 
 # Dependencies
-- lovelistener
-	a change to the internal workings of love
-	to allow libraries to run code with love callbacks
-	such as update, draw, and keypressed
-	without making the user write any extra helper code beyond love.run
+- lovelistener:	a change to love.run to allow libraries to quietly run code with love callbacks
 
 # Features
-- Supports keyboard, mouse, gamepad, and joystick by default
+- Supports keyboard, mouse, gamepad, and joystick
 - Ability to listen for inputs for remappable controls
-- TODO: built-in Deadzone functions for leftstick and rightstick
+- Control preprocessing (deadzones, scaling)
 
 # Limitations
 - No gesture support
