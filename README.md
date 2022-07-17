@@ -100,6 +100,11 @@ action: a table that is automatically created for every action key in ctrl.actio
 `controls.clearlisten()`
 - clears all previous inputs to allow easier detection when using controls.listen
 
+`controls.deadzone(action, min, max)`
+- applies a smooth deadzone on the action and returns a new action with the deadzone applied
+- min must be less than max
+- "smooth deadzone" is applied with the following pseudocode: `if mag < min then mag = 0 else (remap mag from range [min, max] to range [0, 1]) end`
+
 ## Instance Functions
 
 `ctrl:setactive(bool)`
@@ -148,6 +153,9 @@ action: a table that is automatically created for every action key in ctrl.actio
 - takes two 1d axis action names and creates a 2d axis with their values
 - if actionname is a valid action in ctrl, then that action will be updated with the result of this function
 - option to normalize the input
+
+`ctrl:deadzone(actionname, min, max)`
+- calls control.deadzone on the action with name actionname
 
 ## Additional Love Callbacks
 - made a part of the love table to interface with libraries such as hump.gamestate
