@@ -167,7 +167,7 @@ action: a table that is automatically created for every action key in ctrl.actio
 - all args are the same as actionpressed
 
 `love.actionaxis(ctrl, actionname, action)`
--- called when a 1d axis is changed
+- called when a 1d axis is changed
 
 `love.actionaxis2d(ctrl, actionname, action)`
--- called when a 2d axis is changed
+- called when a 2d axis is changed
