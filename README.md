@@ -138,7 +138,7 @@ action: a table that is automatically created for every action key in ctrl.actio
 - path from device to input may vary in length for custom devices, so the path is defined as varargs
 
 `ctrl:setuniquemapping(actionname, device, ...)`
-- first removes all actions associated with actionname using getinputs()
+- first unassociates all actions previously associated with actionname using getinputs()
 - then adds the action back using addmapping()
 
 `ctrl:buttonsToAxis([actionname], leftname, rightname, [downname, upname, [normalize] ])`
