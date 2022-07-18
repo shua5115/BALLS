@@ -112,7 +112,7 @@ action: a table that is automatically created for every action key in ctrl.actio
 - controls which are inactive will not be updated by the library
 - controls are active by default
 
-`ctrl:getactive()`
+`ctrl:isactive()`
 - returns if the control is active
 
 `ctrl:getaction(actionname)`
