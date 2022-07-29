@@ -151,8 +151,10 @@ local function setlastinput(inputtype, device, key, joystick)
 	lastinput[inputtype][2] = key
 	lastinput[device] = {inputtype, key}
 	if joystick then
-		lastinput[inputtype][joystick] = key
-		lastinput[joystick] = {inputtype, key}
+		lastinput[inputtype][joystick] = lastinput[inputtype][joystick] or {}
+		lastinput[inputtype][joystick][device] = key
+		lastinput[joystick] = lastinput[joystick] or {}
+		lastinput[joystick][device] = {inputtype, key}
 	end
 	lastinput[1], lastinput[2], lastinput[3] = inputtype, device, key
 end
@@ -542,6 +544,12 @@ function ctrlhelper.typeOf(ctrl, t)
 	return (t == "Controls")
 end
 
+local function isJoystick(j)
+	if not j then return false end
+	local joymt = getmetatable(j)
+	return type(joystick) == "number" or (type(joymt) == "table" and joymt.typeOf == "function" and joymt.typeOf("Joystick"))
+end
+
 function controls.new(t, actions, mapping, joystick)
 	local ctrl = type(t) == "table" and t or {}
 	ctrl.actions = {}
@@ -562,9 +570,7 @@ function controls.new(t, actions, mapping, joystick)
 		joystick = {};
 		gamepad = {};
 	}
-	-- only allow actual joystick objects (this is the best type check I can do for now)
-	local joymt = getmetatable(joystick)
-	if type(joystick) == "number" or (joymt and joymt.typeOf == "function" and joymt.typeOf("Joystick")) then
+	if isJoystick(joystick) then
 		ctrl.joystick = joystick
 	end
 	-- for some strange reason, the metatable member __index of the ctrl must be set for it to be an argument in a love event
@@ -580,20 +586,16 @@ function controls.clearlisten()
 	lastinput = {}
 end
 
-function controls.listen(inputtype, device)
+function controls.listen(inputtype, device, joystick)
 	if inputtype then
 		if device then
-			local key = safeget(lastinput, inputtype, device)
+			local key
+			if isJoystick(joystick) then
+				key = safeget(lastinput, inputtype, joystick, device)
+			else
+				key = safeget(lastinput, inputtype, device)
+			end
 			if key then
-				if type(device) ~= "string" then
-					-- must have been joystick, deduce what kind
-					if type(key) == "number" then
-						if inputtype == "axis" then device = "joystickaxis" end
-						if inputtype == "button" then device = "joystickbutton" end
-					elseif type(key) == "string" then
-						device = "gamepad"
-					end
-				end
 				return inputtype, device, key
 			end
 		else
@@ -605,20 +607,17 @@ function controls.listen(inputtype, device)
 		end
 	else
 		if device then
-			local typekey = safeget(lastinput, device)
+			local typekey
+			local isJoy = isJoystick(joystick)
+			if isJoy then
+				typekey = safeget(lastinput, joystick, device)
+			else
+				typekey = safeget(lastinput, device)
+			end
 			if typekey then
-				if type(device) ~= "string" then
-					-- must have been joystick, deduce what kind
-					if type(typekey[2]) == "number" then
-						if typekey[1] == "axis" then device = "joystickaxis" end
-						if typekey[1] == "button" then device = "joystickbutton" end
-					elseif type(typekey[2]) == "string" then
-						device = "gamepad"
-					end
-				end
 				return typekey[1], device, typekey[2]
 			end
-			if lastinput[2] ~= device then return end
+			if isJoy or lastinput[2] ~= device then return end
 		end
 		return lastinput[1], lastinput[2], lastinput[3]
 	end
