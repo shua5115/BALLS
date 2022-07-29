@@ -94,6 +94,7 @@ action: a table that is automatically created for every action key in ctrl.actio
 - if inputtype is passed (button, axis, axis2d), the recent input of that type will be returned
 - if device is passed (keyboard, mouse, gamepad, joystickbutton, joystickaxis),
 	the function will only return previous inputs from that type of device
+	- device can also be an instance of a Joystick, where only previous inputs from that joystick are returned.
 - you can mix passing inputtype and device for more specific checks
 
 `controls.clearlisten()`
