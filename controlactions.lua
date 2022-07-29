@@ -144,12 +144,16 @@ end
 
 local lastinput = {}
 
-local function setlastinput(inputtype, device, key)
+local function setlastinput(inputtype, device, key, joystick)
 	lastinput[inputtype] = lastinput[inputtype] or {}
 	lastinput[inputtype][device] = key
 	lastinput[inputtype][1] = device
 	lastinput[inputtype][2] = key
 	lastinput[device] = {inputtype, key}
+	if joystick then
+		lastinput[inputtype][joystick] = key
+		lastinput[joystick] = {inputtype, key}
+	end
 	lastinput[1], lastinput[2], lastinput[3] = inputtype, device, key
 end
 
@@ -205,7 +209,7 @@ function callbacks.wheelmoved(x, y)
 end
 
 function callbacks.gamepadpressed(j, b)
-	setlastinput("button", "gamepad", b)
+	setlastinput("button", "gamepad", b, j)
 	for ctrl in pairs(active) do
 		handlebutton(true, ctrl, "gamepad", b)
 	end
@@ -221,10 +225,10 @@ function callbacks.gamepadaxis(j, a, v)
 	if v > 0.5 or v < -0.5 then
 		setlastinput("axis", "gamepad", a)
 		if a == "leftx" or a == "lefty" then
-			setlastinput("axis2d", "gamepad", "leftxy")
+			setlastinput("axis2d", "gamepad", "leftxy", j)
 		end
 		if a == "rightx" or a == "righty" then
-			setlastinput("axis2d", "gamepad", "rightxy")
+			setlastinput("axis2d", "gamepad", "rightxy", j)
 		end
 	end
 	for ctrl in pairs(active) do
@@ -233,7 +237,7 @@ function callbacks.gamepadaxis(j, a, v)
 end
 
 function callbacks.joystickpressed(j, b)
-	setlastinput("button", "joystickbutton", b)
+	setlastinput("button", "joystickbutton", b, j)
 	for ctrl in pairs(active) do
 		handlebutton(true, ctrl, "joystickbutton", b)
 	end
@@ -247,7 +251,7 @@ end
 
 function callbacks.joystickaxis(j, a, v)
 	if v > 0.5 or v < -0.5 then
-		setlastinput("axis", "joystickaxis", a)
+		setlastinput("axis", "joystickaxis", a, j)
 	end
 	for ctrl in pairs(active) do
 		handlejoystickaxis(j, v, ctrl, "joystick", a)
@@ -581,6 +585,15 @@ function controls.listen(inputtype, device)
 		if device then
 			local key = safeget(lastinput, inputtype, device)
 			if key then
+				if type(device) ~= "string" then
+					-- must have been joystick, deduce what kind
+					if type(key) == "number" then
+						if inputtype == "axis" then device = "joystickaxis" end
+						if inputtype == "button" then device = "joystickbutton" end
+					elseif type(key) == "string" then
+						device = "gamepad"
+					end
+				end
 				return inputtype, device, key
 			end
 		else
@@ -594,6 +607,15 @@ function controls.listen(inputtype, device)
 		if device then
 			local typekey = safeget(lastinput, device)
 			if typekey then
+				if type(device) ~= "string" then
+					-- must have been joystick, deduce what kind
+					if type(typekey[2]) == "number" then
+						if typekey[1] == "axis" then device = "joystickaxis" end
+						if typekey[1] == "button" then device = "joystickbutton" end
+					elseif type(typekey[2]) == "string" then
+						device = "gamepad"
+					end
+				end
 				return typekey[1], device, typekey[2]
 			end
 			if lastinput[2] ~= device then return end
