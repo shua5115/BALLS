@@ -547,7 +547,7 @@ end
 local function isJoystick(j)
 	if not j then return false end
 	local joymt = getmetatable(j)
-	return type(joystick) == "number" or (type(joymt) == "table" and joymt.typeOf == "function" and joymt.typeOf("Joystick"))
+	return type(j) == "number" or (type(joymt) == "table" and joymt.typeOf == "function" and joymt.typeOf("Joystick"))
 end
 
 function controls.new(t, actions, mapping, joystick)
@@ -591,6 +591,7 @@ function controls.listen(inputtype, device, joystick)
 		if device then
 			local key
 			if isJoystick(joystick) then
+				if type(joystick) == "number" then joystick = love.joystick.getJoysticks()[joystick] end
 				key = safeget(lastinput, inputtype, joystick, device)
 			else
 				key = safeget(lastinput, inputtype, device)
@@ -610,6 +611,7 @@ function controls.listen(inputtype, device, joystick)
 			local typekey
 			local isJoy = isJoystick(joystick)
 			if isJoy then
+				if type(joystick) == "number" then joystick = love.joystick.getJoysticks()[joystick] end
 				typekey = safeget(lastinput, joystick, device)
 			else
 				typekey = safeget(lastinput, device)
