@@ -1,5 +1,6 @@
-# controlactions
-A flexible controls library for love
+# Better Actions Lightweight LÖVE System
+A well-rounded controls library for love
+and a spiritual successer to the Common Organization of Controls Kit
 
 # Dependencies
 - lovelistener:	a change to love.run to allow libraries to quietly run code with love callbacks
