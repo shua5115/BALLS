@@ -1,5 +1,5 @@
 # Better Actions Lightweight LÖVE System
-A well-rounded controls library for love
+A well-rounded controls library for LÖVE
 and a spiritual successer to the Common Organization of Controls Kit
 
 # Dependencies
