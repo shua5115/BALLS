@@ -49,8 +49,8 @@ mapping = {
 	gamepad = {
 		GamepadButton	= "name"	-- see https://love2d.org/wiki/GamepadButton for possible values
 		GamepadAxis		= "name"	-- see https://love2d.org/wiki/GamepadAxis for possible values
-		"leftstick"		= "name"	-- macro that combines the values from leftx and lefty into a 2d axis
-		"rightstick"	= "name"	-- same as leftstick, but for rightx and righty
+		"leftxy"		= "name"	-- macro that combines the values from leftx and lefty into a 2d axis
+		"rightxy"	= "name"	-- same as leftxy, but for rightx and righty
 	},
 	joystickbutton = {
 		number	= "name"	-- number is the joystick button number
